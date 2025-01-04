@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="ar">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لعبة الثعبان مع الضرب</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #000;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+        }
+
+        canvas {
+            background-color: #111;
+            display: block;
+            margin: 20px auto;
+            border: 2px solid #fff;
+            touch-action: none;
+            /* لمنع التكبير/التصغير على الجوال */
+        }
+
+        .score {
+            font-size: 24px;
+            margin-top: 20px;
+        }
+
+        .message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border: 2px solid #fff;
+            display: none;
+        }
+
+        .button {
+            padding: 10px 20px;
+            background-color: red;
+            color: white;
+            cursor: pointer;
+            border: 2px solid white;
+            font-size: 20px;
+            margin-top: 20px;
+        }
+
+        .timer {
+            font-size: 24px;
+            margin-top: 10px;
+        }
+
+        .motivation {
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 32px;
+            color: yellow;
+            display: none;
+        }
+
+        .instructions {
+            font-size: 18px;
+            margin-top: 10px;
+            color: #ccc;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>لعبة الثعبان مع الضرب</h1>
+    <canvas id="gameCanvas" width="600" height="400"></canvas>
+    <div class="score">النقاط: <span id="score">٠</span></div>
+    <div class="timer">الوقت المتبقي: <span id="timer">٦٠</span> ثانية</div>
+    <div class="instructions">
+        حرك الأسهم (أو المس الشاشة) لتحريك الثعبان.<br>
+        الوقت ينتهي بانقضاء الزمن أو بالاصطدام بأي جسم.
+    </div>
+    <div class="message" id="message"></div>
+    <div class="motivation" id="motivation"></div>
+    <button class="button" id="endButton">إنهاء اللعبة</button>
+    <button class="button" id="restartButton">البدء من جديد</button>
+    <button class="button" id="closeButton">إغلاق اللعبة</button>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        const timerElement = document.getElementById('timer');
+        const messageElement = document.getElementById('message');
+        const motivationElement = document.getElementById('motivation');
+        const endButton = document.getElementById('endButton');
+        const restartButton = document.getElementById('restartButton');
+        const closeButton = document.getElementById('closeButton');
+
+        const snakeBlock = 20;
+        let snake = [{ x: 300, y: 200 }];
+        let dx = snakeBlock;
+        let dy = 0;
+        let score = 0;
+        let a, b, correctAnswer;
+        let answers = [];
+        let gameInterval;
+        let timer = 60;
+        let timerInterval;
+        let level = 1;
+
+        // تحويل الأرقام إلى هندية
+        const toHindiNumbers = (number) => {
+            const hindiDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+            return number.toString().split('').map(digit => hindiDigits[digit]).join('');
+        };
+
+        // مؤثرات صوتية
+        const correctSound = new Audio('https://www.soundjay.com/button/beep-07.mp3');
+        const wrongSound = new Audio('https://www.soundjay.com/button/beep-08.mp3');
+        const gameOverSound = new Audio('https://www.soundjay.com/misc/sci-fi-whoosh-10.mp3');
+
+        // إنشاء سؤال جديد وإجابات
+        function createQuestion() {
+            a = Math.floor(Math.random() * 10) + 1;
+            b = Math.floor(Math.random() * 10) + 1;
+            correctAnswer = a * b;
+
+            // إنشاء إجابات خاطئة من نواتج جدول الضرب للعددين a و b
+            answers = [correctAnswer];
+            while (answers.length < 3) {
+                let wrongAnswer;
+                if (Math.random() < 0.5) {
+                    wrongAnswer = a * (Math.floor(Math.random() * 10) + 1); // ناتج ضرب a في عدد عشوائي
+                } else {
+                    wrongAnswer = b * (Math.floor(Math.random() * 10) + 1); // ناتج ضرب b في عدد عشوائي
+                }
+                if (!answers.includes(wrongAnswer) && wrongAnswer !== correctAnswer) {
+                    answers.push(wrongAnswer);
+                }
+            }
+            answers.sort(() => Math.random() - 0.5); // ترتيب الإجابات عشوائيًا
+        }
+
+        // رسم الثعبان
+        function drawSnake() {
+            ctx.fillStyle = 'green'; // لون الثعبان أخضر
+            snake.forEach((part) => {
+                ctx.fillRect(part.x, part.y, snakeBlock, snakeBlock);
+            });
+
+            // رسم السؤال باللون الأبيض على رأس الثعبان
+            const head = snake[0];
+            ctx.fillStyle = 'white';
+            ctx.font = '14px Arial';
+            ctx.fillText(`${toHindiNumbers(a)} × ${toHindiNumbers(b)} = ?`, head.x + 5, head.y + 15);
+        }
+
+        // رسم الإجابات
+        function drawAnswers() {
+            answers.forEach((answer, index) => {
+                ctx.fillStyle = 'red';
+                ctx.fillRect(100 + index * 150, 300, snakeBlock, snakeBlock); // إبعاد الإجابات عن الحواف
+                ctx.fillStyle = 'white';
+                ctx.font = '14px Arial';
+                ctx.fillText(toHindiNumbers(answer), 105 + index * 150, 320);
+            });
+        }
+
+        // تحريك الثعبان
+        function moveSnake() {
+            const head = { x: snake[0].x + dx, y: snake[0].y + dy };
+            snake.unshift(head);
+
+            // التحقق من الاصطدام بالإجابات
+            answers.forEach((answer, index) => {
+                const answerX = 100 + index * 150;
+                const answerY = 300;
+                if (head.x >= answerX && head.x < answerX + snakeBlock && head.y >= answerY && head.y < answerY + snakeBlock) {
+                    if (answer === correctAnswer) {
+                        correctSound.play();
+                        score += 10;
+                        scoreElement.textContent = toHindiNumbers(score);
+                        snake.push({ ...snake[snake.length - 1] }); // زيادة طول الثعبان باللون الأخضر
+                        createQuestion(); // إنشاء سؤال جديد
+                        resetTimer(); // إعادة تعيين المؤقت
+                        increaseLevel(); // زيادة المستوى
+                        explode(answerX, answerY); // انفجار عند الإجابة الصحيحة
+                        showMotivation(); // عرض رسالة تحفيزية
+                    } else {
+                        wrongSound.play();
+                        gameOver();
+                    }
+                }
+            });
+
+            snake.pop();
+        }
+
+        // انفجار عند الإجابة الصحيحة
+        function explode(x, y) {
+            ctx.fillStyle = 'yellow';
+            ctx.beginPath();
+            ctx.arc(x + snakeBlock / 2, y + snakeBlock / 2, snakeBlock, 0, Math.PI * 2);
+            ctx.fill();
+            setTimeout(() => {
+                ctx.clearRect(x, y, snakeBlock, snakeBlock);
+            }, 200);
+        }
+
+        // عرض رسالة تحفيزية
+        function showMotivation() {
+            const messages = ["رائع!", "مذهل!", "استمر هكذا!", "أحسنت!"];
+            const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+            motivationElement.textContent = randomMessage;
+            motivationElement.style.display = 'block';
+            setTimeout(() => {
+                motivationElement.style.display = 'none';
+            }, 3000); // إخفاء الرسالة بعد 3 ثوانٍ
+        }
+
+        // التحقق من الاصطدام بالجدران أو الجسم
+        function checkCollision() {
+            const head = snake[0];
+            if (head.x < 0 || head.x >= canvas.width || head.y < 0 || head.y >= canvas.height) {
+                gameOver();
+                return;
+            }
+
+            for (let i = 1; i < snake.length; i++) {
+                if (head.x === snake[i].x && head.y === snake[i].y) {
+                    gameOver();
+                    return;
+                }
+            }
+        }
+
+        // انتهاء اللعبة
+        function gameOver() {
+            gameOverSound.play();
+            clearInterval(gameInterval);
+            clearInterval(timerInterval);
+            messageElement.textContent = `انتهت اللعبة! النقاط النهائية: ${toHindiNumbers(score)}`;
+            messageElement.style.display = 'block';
+        }
+
+        // إعادة تشغيل اللعبة
+        function restartGame() {
+            snake = [{ x: 300, y: 200 }];
+            dx = snakeBlock;
+            dy = 0;
+            score = 0;
+            scoreElement.textContent = toHindiNumbers(score);
+            messageElement.style.display = 'none';
+            timer = 60;
+            timerElement.textContent = toHindiNumbers(timer);
+            level = 1;
+            createQuestion();
+            clearInterval(gameInterval);
+            clearInterval(timerInterval);
+            gameInterval = setInterval(gameLoop, 400); // تقليل السرعة أكثر
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        // تحديث المؤقت
+        function updateTimer() {
+            timer--;
+            timerElement.textContent = toHindiNumbers(timer);
+            if (timer <= 0) {
+                gameOver();
+            }
+        }
+
+        // إعادة تعيين المؤقت
+        function resetTimer() {
+            timer = 120 - (level - 1) * 05; // تقليل الوقت مع زيادة المستوى
+            timerElement.textContent = toHindiNumbers(timer);
+        }
+
+        // زيادة المستوى
+        function increaseLevel() {
+            if (score % 30 === 0) {
+                level++;
+                clearInterval(gameInterval);
+                gameInterval = setInterval(gameLoop, 400 - (level - 1) * 50); // زيادة السرعة مع زيادة المستوى
+            }
+        }
+
+        // حلقة اللعبة
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawSnake();
+            drawAnswers();
+            moveSnake();
+            checkCollision();
+        }
+
+        // التحكم بالثعبان
+        document.addEventListener('keydown', e => {
+            if (e.key === 'ArrowUp' && dy === 0) {
+                dx = 0;
+                dy = -snakeBlock;
+            } else if (e.key === 'ArrowDown' && dy === 0) {
+                dx = 0;
+                dy = snakeBlock;
+            } else if (e.key === 'ArrowLeft' && dx === 0) {
+                dx = -snakeBlock;
+                dy = 0;
+            } else if (e.key === 'ArrowRight' && dx === 0) {
+                dx = snakeBlock;
+                dy = 0;
+            }
+        });
+
+        // زر إنهاء اللعبة
+        endButton.addEventListener('click', () => {
+            gameOver();
+        });
+
+        // زر البدء من جديد
+        restartButton.addEventListener('click', () => {
+            restartGame();
+        });
+
+        // زر إغلاق اللعبة
+        closeButton.addEventListener('click', () => {
+            // إعادة توجيه المستخدم إلى صفحة فارغة أو صفحة رئيسية
+            window.location.href = 'about:blank'; // يمكن استبدالها برابط صفحة أخرى
+        });
+
+        // بدء اللعبة
+        createQuestion();
+        gameInterval = setInterval(gameLoop, 400); // تقليل السرعة أكثر
+        timerInterval = setInterval(updateTimer, 1000);
+    </script>
+</body>
+
+</html>
