@@ -118,12 +118,7 @@
             return number.toString().split('').map(digit => hindiDigits[digit]).join('');
         };
 
-        // مؤثرات صوتية
-        const correctSound = new Audio('https://www.soundjay.com/button/beep-07.mp3');
-        const wrongSound = new Audio('https://www.soundjay.com/button/beep-08.mp3');
-        const gameOverSound = new Audio('https://www.soundjay.com/misc/sci-fi-whoosh-10.mp3');
-
-        // إنشاء سؤال جديد وإجابات
+          // إنشاء سؤال جديد وإجابات
         function createQuestion() {
             a = Math.floor(Math.random() * 10) + 1;
             b = Math.floor(Math.random() * 10) + 1;
@@ -181,7 +176,6 @@
                 const answerY = 300;
                 if (head.x >= answerX && head.x < answerX + snakeBlock && head.y >= answerY && head.y < answerY + snakeBlock) {
                     if (answer === correctAnswer) {
-                        correctSound.play();
                         score += 10;
                         scoreElement.textContent = toHindiNumbers(score);
                         snake.push({ ...snake[snake.length - 1] }); // زيادة طول الثعبان باللون الأخضر
@@ -191,7 +185,6 @@
                         explode(answerX, answerY); // انفجار عند الإجابة الصحيحة
                         showMotivation(); // عرض رسالة تحفيزية
                     } else {
-                        wrongSound.play();
                         gameOver();
                     }
                 }
@@ -240,7 +233,6 @@
 
         // انتهاء اللعبة
         function gameOver() {
-            gameOverSound.play();
             clearInterval(gameInterval);
             clearInterval(timerInterval);
             messageElement.textContent = `انتهت اللعبة! النقاط النهائية: ${toHindiNumbers(score)}`;
