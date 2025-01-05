@@ -76,7 +76,7 @@
 
 <body>
     <h1>لعبة الثعبان مع الضرب</h1>
-    <canvas id="gameCanvas" width="600" height="400"></canvas>
+    <canvas id="gameCanvas"></canvas>
     <div class="score">النقاط: <span id="score">٠</span></div>
     <div class="timer">الوقت المتبقي: <span id="timer">٦٠</span> ثانية</div>
     <div class="instructions">
@@ -91,16 +91,24 @@
 
     <script>
         const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const scoreElement = document.getElementById('score');
-        const timerElement = document.getElementById('timer');
-        const messageElement = document.getElementById('message');
-        const motivationElement = document.getElementById('motivation');
-        const endButton = document.getElementById('endButton');
-        const restartButton = document.getElementById('restartButton');
-        const closeButton = document.getElementById('closeButton');
+            const ctx = canvas.getContext('2d');
+            const scoreElement = document.getElementById('score');
+            const timerElement = document.getElementById('timer');
+            const messageElement = document.getElementById('message');
+            const motivationElement = document.getElementById('motivation');
+            const endButton = document.getElementById('endButton');
+            const restartButton = document.getElementById('restartButton');
+            const closeButton = document.getElementById('closeButton');
+            const snakeBlock = Math.min(canvas.width / 30, canvas.height / 20);
 
-        const snakeBlock = 20;
+             function resizeCanvas() {
+                    canvas.width = window.innerWidth * 0.9;
+                    canvas.height = window.innerHeight * 0.5;
+                }
+
+                window.addEventListener('resize', resizeCanvas);
+                resizeCanvas();
+
         let snake = [{ x: 300, y: 200 }];
         let dx = snakeBlock;
         let dy = 0;
@@ -117,7 +125,7 @@
             const hindiDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
             return number.toString().split('').map(digit => hindiDigits[digit]).join('');
         };
-               // إنشاء سؤال جديد وإجابات
+        // إنشاء سؤال جديد وإجابات
         function createQuestion() {
             a = Math.floor(Math.random() * 10) + 1;
             b = Math.floor(Math.random() * 10) + 1;
@@ -203,7 +211,7 @@
             }, 200);
         }
 
-      /*  // عرض رسالة تحفيزية
+        // عرض رسالة تحفيزية
         function showMotivation() {
             const messages = ["رائع!", "مذهل!", "استمر هكذا!", "أحسنت!"];
             const randomMessage = messages[Math.floor(Math.random() * messages.length)];
@@ -212,7 +220,7 @@
             setTimeout(() => {
                 motivationElement.style.display = 'none';
             }, 3000); // إخفاء الرسالة بعد 3 ثوانٍ
-        }*/
+        }
 
         // التحقق من الاصطدام بالجدران أو الجسم
         function checkCollision() {
