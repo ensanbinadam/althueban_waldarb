@@ -20,8 +20,8 @@
             display: block;
             margin: 20px auto;
             border: 2px solid #fff;
-            touch-action: none;
-            /* لمنع التكبير/التصغير على الجوال */
+            touch-action:  auto;
+            /* لمنع التكبير/التصغير على الجوال  عطلت هذا المنع*/
         }
 
         .score {
@@ -76,7 +76,7 @@
 
 <body>
     <h1>لعبة الثعبان مع الضرب</h1>
-    <canvas id="gameCanvas" width="600" height="400"></canvas>
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
     <div class="score">النقاط: <span id="score">٠</span></div>
     <div class="timer">الوقت المتبقي: <span id="timer">٦٠</span> ثانية</div>
     <div class="instructions">
