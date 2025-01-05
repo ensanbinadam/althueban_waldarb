@@ -155,7 +155,6 @@
     <button class="button" id="endButton">إنهاء اللعبة</button>
     <button class="button" id="restartButton">البدء من جديد</button>
     <button class="button" id="closeButton">إغلاق اللعبة</button>
-
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
@@ -168,7 +167,6 @@
         const closeButton = document.getElementById('closeButton');
         const snakeBlock = Math.min(canvas.width / 30, canvas.height / 20);
         let snake = [{ x: 300, y: 200 }];
-        let dx = snakeBlock;
         let dy = 0;
         let score = 0;
         let a, b, correctAnswer;
